@@ -1,54 +1,70 @@
 function Firework() {
 
-    this.x = random(width);
-    this.y = height + 50;
-    this.vel = createVector(random(-1, 1), -10);
-    this.acc = createVector();
-    this.particles = [];
-    this.life = 255;
+   this.x = 0;
+   this.y = height + 100;
+   this.vel = createVector();
+   this.acc = createVector();
+   this.size = 0;
+   this.particleCounter = 0;
+   this.exploded = false;
+   this.active = false;
 
-    this.color = [];
-    this.color[0] = 255;
-    this.color[1] = 255;
-    this.color[2] = 255;
+   this.reset = function() {
+      this.x = random(width);
+      this.y = height + 50;
+      this.vel = createVector(random(-1, 1), random(-10, -25));
+      this.acc = createVector();
+      this.size = abs(this.vel.y / 1.5) * 1.5;
+      this.particleCounter = 0;
+      this.exploded = false;
+      this.active = true;
+   }
 
-
-    this.update = function() {
-
-        this.vel.mult(.99);
-        this.vel.y += .1;
-
-
-        for (var i = this.particles.length - 1; i >= 0; i--) {
-            this.particles[i].update();
-            if (this.particles[i].life < 0) {
-                this.particles.splice(i, 1);
+   this.requestParticles = function() {
+      for (let p of particles) {
+         if (this.particleCounter < this.size) {
+            if (!p.active) {
+               this.particleCounter++;
+               p.reset(this.size, this.x, this.y);
             }
-        }
+         }
+      }
+   }
 
-        this.x += this.vel.x;
-        this.y += this.vel.y;
+   this.update = function() {
 
-        // this.vel.add(this.acc);
+      if (!this.exploded) {
+         this.vel.y += this.size / 50;
 
-        // if (this.acc < 0) {
-        //     this.acc.y += .01;
-        // }
+         this.x += this.vel.x;
+         this.y += this.vel.y;
 
-        this.life--;
+         if (this.vel.y > .01) {
+            this.exploded = true;
+            this.requestParticles();
+         }
+      }
 
-        console.log(this.x);
-        console.log(this.y);
-        console.log();
-        console.log();
+      var empty = true;
 
-    };
+      if (this.exploded && empty) {
+         this.particles = null;
+         this.active = false;
+      }
+   };
 
-    this.display = function() {
-        fill(255);
-        // fill(this.color[0], this.color[1], this.color[2]);
-        ellipse(this.x, this.y, 10, 10);
-    };
-
-
-}
+   this.display = function() {
+      if (!this.exploded) {
+         strokeWeight(this.size);
+         stroke(255);
+         point(this.x, this.y);
+      }
+      else {
+         for (let p of this.particles) {
+            if (p.active) {
+               p.display();
+            }
+         }
+      }
+   }
+};
